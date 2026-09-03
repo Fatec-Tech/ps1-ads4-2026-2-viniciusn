@@ -33,10 +33,17 @@
 					<input type="date" class="form-control" id="nascimento" required />
 				</div>
 
+				<div class="tel">
+					<label for="telefone" class="form-label">Telefone</label>
+					<input type="number" class="form-control" id="telefone" required>
+				</div>
+
 				<div class="col-md-1 d-flex align-items-end">
 					<button type="submit" class="btn btn-primary w-100">+</button>
 				</div>
 			</form>
+			
+			<h2>Total de pacientes: <span id="pacientes">0</span></h2>
 
 			<!-- Tabela de pacientes -->
 			<h2 class="h4 mb-3">Pacientes cadastrados</h2>
@@ -46,6 +53,8 @@
 						<th>Nome</th>
 						<th>E-mail</th>
 						<th>Data de nascimento</th>
+						<th>Idade</th>
+						<th>Telefone</th>
 					</tr>
 				</thead>
 				<tbody id="tabela-pacientes">
