@@ -45,16 +45,27 @@
 			
 			<h2>Total de pacientes: <span id="pacientes">0</span></h2>
 
+			<div class="mb-3">
+	<label for="busca" class="form-label">Buscar paciente por nome</label>
+	<input
+		type="text"
+		class="form-control"
+		id="busca"
+		placeholder="Digite o nome do paciente"
+	/>
+</div>
+
 			<!-- Tabela de pacientes -->
 			<h2 class="h4 mb-3">Pacientes cadastrados</h2>
 			<table class="table table-striped">
 				<thead>
 					<tr>
-						<th>Nome</th>
+						<th id="ordenar-nome" style="cursor: pointer">Nome</th>
 						<th>E-mail</th>
 						<th>Data de nascimento</th>
 						<th>Idade</th>
 						<th>Telefone</th>
+						<th>Ações</th>
 					</tr>
 				</thead>
 				<tbody id="tabela-pacientes">
