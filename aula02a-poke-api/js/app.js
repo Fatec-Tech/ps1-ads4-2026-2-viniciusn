@@ -5,142 +5,571 @@ const loading = document.getElementById('loading');
 const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 
-// Função para buscar os detalhes individuais de um Pokémon
+
+// ==========================================
+// BUSCAR DADOS DA API
+// ==========================================
+
 async function fetchPokemonData(urlOrName) {
-	const url = urlOrName.startsWith('http')
-		? urlOrName
-		: `${API_URL}/${urlOrName.toLowerCase().trim()}`;
 
-	const response = await fetch(url);
-	if (!response.ok) {
-		throw new Error('Pokémon não encontrado');
-  }
-  console.log('Response:', response); // Log da resposta para depuração
-	return await response.json();
+    let url;
+
+    if (urlOrName.toString().startsWith('http')) {
+        url = urlOrName;
+    } else {
+        url = `${API_URL}/${urlOrName}`;
+    }
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error('Pokémon não encontrado');
+    }
+
+    return await response.json();
 }
 
-// Função para carregar a lista inicial (ex: primeiros 20)
+
+// ==========================================
+// CARREGAR POKÉMON INICIAL
+// ==========================================
+
 async function loadInitialPokemon(limit = 20) {
-	showLoading(true);
-	pokemonGrid.innerHTML = '';
 
-	try {
-		const response = await fetch(`${API_URL}?limit=${limit}`);
-		const data = await response.json();
+    showLoading(true);
 
-		// Faz requisição paralela dos detalhes de cada um dos itens listados
-		const pokemonPromises = data.results.map((item) =>
-			fetchPokemonData(item.url)
-		);
-		const pokemonList = await Promise.all(pokemonPromises);
+    try {
 
-		// Renderiza cada card
-		pokemonList.forEach(renderPokemonCard);
-	} catch (error) {
-		showError('Erro ao carregar a lista de Pokémon.');
-		console.error(error);
-	} finally {
-		showLoading(false);
-	}
+        const response = await fetch(`${"https://app-poke.onrender.com/"}?limit=${limit}`);
+
+        if (!response.ok) {
+            throw new Error('Erro ao carregar Pokémon');
+        }
+
+        const data = await response.json();
+
+        const pokemonPromises = data.results.map(item =>
+            fetchPokemonData(item.url)
+        );
+
+        const pokemonList = await Promise.all(pokemonPromises);
+
+        pokemonGrid.innerHTML = '';
+
+        pokemonList.forEach(pokemon => {
+            renderPokemonCard(pokemon);
+        });
+
+    } catch (error) {
+
+        console.error(error);
+        showError('Falha ao carregar os Pokémon.');
+
+    } finally {
+
+        showLoading(false);
+
+    }
 }
 
-// Função para criar a estrutura visual do Card no Bootstrap
+
+// ==========================================
+// CRIAR CARD DO POKÉMON
+// ==========================================
+
 function renderPokemonCard(pokemon) {
-  console.log('Rendering Pokémon:', pokemon); // Log do Pokémon para depuração
-	// Pega a imagem oficial de alta qualidade (dream_world ou official-artwork)
-	const imageUrl =
-		pokemon.sprites.other['official-artwork'].front_default ||
-		pokemon.sprites.front_default;
 
-	// Mapeia os tipos para Badges do Bootstrap
-	const typesBadges = pokemon.types
-		.map(
-			(t) =>
-				`<span class="badge bg-secondary badge-type">${t.type.name}</span>`
-		)
-		.join('');
+    const image =
+        pokemon.sprites.other?.['official-artwork']?.front_default ||
+        pokemon.sprites.front_default;
 
-	// Formata peso (em kg) e altura (em m)
-	const heightInMeters = (pokemon.height / 10).toFixed(1);
-	const weightInKg = (pokemon.weight / 10).toFixed(1);
+    const types = pokemon.types
+        .map(type => `
+            <span class="badge bg-primary me-1 text-capitalize">
+                ${type.type.name}
+            </span>
+        `)
+        .join('');
 
-	const cardHTML = `
+    const height = pokemon.height / 10;
+    const weight = pokemon.weight / 10;
+
+    const cardHTML = `
         <div class="col">
-          <div class="card h-100 shadow-sm pokemon-card border-0">
-            <div class="text-center p-3 bg-white rounded-top">
-              <img src="${imageUrl}" class="card-img-top img-fluid" style="max-height: 160px; object-fit: contain;" alt="${pokemon.name}">
-            </div>
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="card-title text-capitalize fw-bold m-0">${pokemon.name}</h5>
-                <small class="text-muted">#${String(pokemon.id).padStart(3, '0')}</small>
-              </div>
-              <div class="mb-3">
-                ${typesBadges}
-              </div>
-              <div class="row text-center border-top pt-2">
-                <div class="col-6 border-end">
-                  <small class="text-muted d-block">Altura</small>
-                  <strong>${heightInMeters} m</strong>
+            <div
+                class="card h-100 shadow-sm pokemon-card border-0"
+                style="cursor: pointer;"
+                onclick="openPokemonModal(${pokemon.id})"
+            >
+
+                <img
+                    src="${image}"
+                    class="card-img-top p-3"
+                    alt="${pokemon.name}"
+                >
+
+                <div class="card-body text-center">
+
+                    <h5 class="card-title text-capitalize">
+                        #${pokemon.id} ${pokemon.name}
+                    </h5>
+
+                    <div class="mb-2">
+                        ${types}
+                    </div>
+
+                    <p class="card-text">
+                        <strong>Altura:</strong> ${height} m
+                        <br>
+                        <strong>Peso:</strong> ${weight} kg
+                    </p>
+
                 </div>
-                <div class="col-6">
-                  <small class="text-muted d-block">Peso</small>
-                  <strong>${weightInKg} kg</strong>
-                </div>
-              </div>
+
             </div>
-          </div>
         </div>
-      `;
+    `;
 
-	pokemonGrid.insertAdjacentHTML('beforeend', cardHTML);
+    pokemonGrid.insertAdjacentHTML('beforeend', cardHTML);
 }
 
-// Busca específica por nome ou ID
+
+// ==========================================
+// ABRIR MODAL DO POKÉMON
+// ==========================================
+
+async function openPokemonModal(id) {
+
+    try {
+
+        showLoading(true);
+
+        const pokemon = await fetchPokemonData(id);
+
+        // -----------------------------
+        // TÍTULO
+        // -----------------------------
+
+        const modalTitle = document.getElementById('pokemonModalTitle');
+
+        modalTitle.textContent =
+            `#${pokemon.id} ${pokemon.name}`;
+
+
+        // -----------------------------
+        // DADOS DOS STATUS
+        // -----------------------------
+
+        const hp = pokemon.stats.find(
+            stat => stat.stat.name === 'hp'
+        ).base_stat;
+
+        const attack = pokemon.stats.find(
+            stat => stat.stat.name === 'attack'
+        ).base_stat;
+
+        const defense = pokemon.stats.find(
+            stat => stat.stat.name === 'defense'
+        ).base_stat;
+
+        const speed = pokemon.stats.find(
+            stat => stat.stat.name === 'speed'
+        ).base_stat;
+
+
+        // -----------------------------
+        // HABILIDADES
+        // -----------------------------
+
+        const abilities = pokemon.abilities
+            .map(ability => `
+                <li class="list-group-item text-capitalize">
+                    ${ability.ability.name}
+                </li>
+            `)
+            .join('');
+
+
+        // -----------------------------
+        // CRY DO POKÉMON
+        // -----------------------------
+
+        const cry =
+            pokemon.cries?.latest ||
+            pokemon.cries?.legacy;
+
+
+        // -----------------------------
+        // SPRITES
+        // -----------------------------
+
+        const frontDefault =
+            pokemon.sprites.front_default;
+
+        const backDefault =
+            pokemon.sprites.back_default;
+
+        const frontShiny =
+            pokemon.sprites.front_shiny;
+
+        const backShiny =
+            pokemon.sprites.back_shiny;
+
+
+        // -----------------------------
+        // HTML DO MODAL
+        // -----------------------------
+
+        const modalBody =
+            document.getElementById('pokemonModalBody');
+
+        modalBody.innerHTML = `
+
+            <!-- IMAGEM PRINCIPAL -->
+
+            <div class="text-center mb-4">
+
+                <img
+                    src="${pokemon.sprites.other?.['official-artwork']?.front_default || frontDefault}"
+                    alt="${pokemon.name}"
+                    class="img-fluid"
+                    style="max-width: 200px;"
+                >
+
+            </div>
+
+
+            <!-- STATUS -->
+
+            <h5 class="mb-3">
+                Status
+            </h5>
+
+
+            <div class="mb-3">
+
+                <div class="d-flex justify-content-between">
+                    <span>HP</span>
+                    <strong>${hp}</strong>
+                </div>
+
+                <div class="progress">
+                    <div
+                        class="progress-bar"
+                        role="progressbar"
+                        style="width: ${Math.min(hp, 100)}%;"
+                    >
+                        ${hp}
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="mb-3">
+
+                <div class="d-flex justify-content-between">
+                    <span>Ataque</span>
+                    <strong>${attack}</strong>
+                </div>
+
+                <div class="progress">
+                    <div
+                        class="progress-bar"
+                        role="progressbar"
+                        style="width: ${Math.min(attack, 100)}%;"
+                    >
+                        ${attack}
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="mb-3">
+
+                <div class="d-flex justify-content-between">
+                    <span>Defesa</span>
+                    <strong>${defense}</strong>
+                </div>
+
+                <div class="progress">
+                    <div
+                        class="progress-bar"
+                        role="progressbar"
+                        style="width: ${Math.min(defense, 100)}%;"
+                    >
+                        ${defense}
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="mb-4">
+
+                <div class="d-flex justify-content-between">
+                    <span>Velocidade</span>
+                    <strong>${speed}</strong>
+                </div>
+
+                <div class="progress">
+                    <div
+                        class="progress-bar"
+                        role="progressbar"
+                        style="width: ${Math.min(speed, 100)}%;"
+                    >
+                        ${speed}
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- HABILIDADES -->
+
+            <h5 class="mb-3">
+                Habilidades
+            </h5>
+
+            <ul class="list-group mb-4">
+                ${abilities}
+            </ul>
+
+
+            <!-- CRY -->
+
+            <h5 class="mb-3">
+                Cry
+            </h5>
+
+            ${
+                cry
+                    ? `
+                        <audio
+                            controls
+                            class="w-100 mb-4"
+                        >
+                            <source
+                                src="${cry}"
+                                type="audio/ogg"
+                            >
+
+                            Seu navegador não suporta áudio.
+                        </audio>
+                    `
+                    : `
+                        <p>
+                            Cry não disponível.
+                        </p>
+                    `
+            }
+
+
+            <!-- SPRITES -->
+
+            <h5 class="mb-3">
+                Sprites
+            </h5>
+
+            <div class="row text-center">
+
+                <div class="col-6 col-md-3 mb-3">
+
+                    <p>
+                        Normal - Frente
+                    </p>
+
+                    <img
+                        src="${frontDefault}"
+                        alt="${pokemon.name} normal frente"
+                        class="img-fluid"
+                    >
+
+                </div>
+
+
+                <div class="col-6 col-md-3 mb-3">
+
+                    <p>
+                        Normal - Costas
+                    </p>
+
+                    <img
+                        src="${backDefault}"
+                        alt="${pokemon.name} normal costas"
+                        class="img-fluid"
+                    >
+
+                </div>
+
+
+                <div class="col-6 col-md-3 mb-3">
+
+                    <p>
+                        Shiny - Frente
+                    </p>
+
+                    <img
+                        src="${frontShiny}"
+                        alt="${pokemon.name} shiny frente"
+                        class="img-fluid"
+                    >
+
+                </div>
+
+
+                <div class="col-6 col-md-3 mb-3">
+
+                    <p>
+                        Shiny - Costas
+                    </p>
+
+                    <img
+                        src="${backShiny}"
+                        alt="${pokemon.name} shiny costas"
+                        class="img-fluid"
+                    >
+
+                </div>
+
+            </div>
+
+        `;
+
+
+        // -----------------------------
+        // ABRIR MODAL
+        // -----------------------------
+
+        const modalElement =
+            document.getElementById('pokemonModal');
+
+        const modal =
+            new bootstrap.Modal(modalElement);
+
+        modal.show();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        showError(
+            'Não foi possível carregar os detalhes do Pokémon.'
+        );
+
+    } finally {
+
+        showLoading(false);
+
+    }
+}
+
+
+// ==========================================
+// PESQUISA
+// ==========================================
+
 async function handleSearch() {
-	const query = searchInput.value.trim();
-	if (!query) {
-		loadInitialPokemon();
-		return;
-	}
 
-	showLoading(true);
-	pokemonGrid.innerHTML = '';
+    const searchTerm =
+        searchInput.value.trim().toLowerCase();
 
-	try {
-		const pokemon = await fetchPokemonData(query);
-		renderPokemonCard(pokemon);
-	} catch (error) {
-		showError(`Nenhum Pokémon encontrado com o termo "${query}".`);
-	} finally {
-		showLoading(false);
-	}
+    if (!searchTerm) {
+
+        loadInitialPokemon();
+
+        return;
+    }
+
+    showLoading(true);
+
+    try {
+
+        const pokemon =
+            await fetchPokemonData(searchTerm);
+
+        pokemonGrid.innerHTML = '';
+
+        renderPokemonCard(pokemon);
+
+    } catch (error) {
+
+        console.error(error);
+
+        showError(
+            'Pokémon não encontrado.'
+        );
+
+    } finally {
+
+        showLoading(false);
+
+    }
 }
 
-// Utilitários de UI
+
+// ==========================================
+// LOADING
+// ==========================================
+
 function showLoading(state) {
-	if (state) {
-		loading.classList.remove('d-none');
-	} else {
-		loading.classList.add('d-none');
-	}
+
+    if (state) {
+
+        loading.classList.remove('d-none');
+
+    } else {
+
+        loading.classList.add('d-none');
+
+    }
 }
+
+
+// ==========================================
+// ERRO
+// ==========================================
 
 function showError(message) {
-	pokemonGrid.innerHTML = `
+
+    pokemonGrid.innerHTML = `
         <div class="col-12">
-          <div class="alert alert-warning text-center" role="alert">
-            ${message}
-          </div>
+            <div class="alert alert-danger text-center">
+                ${message}
+            </div>
         </div>
-      `;
+    `;
 }
 
-// Eventos
-searchBtn.addEventListener('click', handleSearch);
-searchInput.addEventListener('keypress', (e) => {
-	if (e.key === 'Enter') handleSearch();
-});
 
-// Inicialização
+// ==========================================
+// EVENTOS
+// ==========================================
+
+searchBtn.addEventListener(
+    'click',
+    handleSearch
+);
+
+
+searchInput.addEventListener(
+    'keypress',
+    event => {
+
+        if (event.key === 'Enter') {
+
+            handleSearch();
+
+        }
+
+    }
+);
+
+
+// ==========================================
+// INICIALIZAÇÃO
+// ==========================================
+
 loadInitialPokemon();
