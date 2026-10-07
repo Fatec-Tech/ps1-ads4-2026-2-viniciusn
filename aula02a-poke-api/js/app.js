@@ -40,7 +40,7 @@ async function loadInitialPokemon(limit = 20) {
 
     try {
 
-        const response = await fetch(`${"https://app-poke.onrender.com/"}?limit=${limit}`);
+        const response = await fetch(`${API_URL}?limit=${limit}`);
 
         if (!response.ok) {
             throw new Error('Erro ao carregar Pokémon');
