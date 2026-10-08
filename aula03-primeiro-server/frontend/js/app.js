@@ -39,14 +39,18 @@ function atualizarContadores(){
 	quantidadeManual.textContent = pacientesManuais;
 }
 
+// Substitua o caminho local estático pela URL da nossa API
+const URL_API = 'http://localhost:3000/pacientes';
+
 // Nova função: busca os pacientes iniciais a partir do arquivo JSON
 async function carregarPacientesIniciais() {
+
 	try {
 		//Simula uma latência de 1 segundo antes de fazer o fetch
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 
 		// URL propositalmente incorreta para testar o tratamento de erro 
-		const resposta = await fetch('data/arquivo-inexistente.json');
+		const resposta = await fetch(URL_API);
 		
 		//const resposta = await fetch('data/pacientes.json');
 
