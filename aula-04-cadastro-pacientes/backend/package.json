@@ -1,5 +1,5 @@
 {
-  "name": "aula-03-servidor-pacientes",
+  "name": "aula-04-cadastro-pacientes",
   "version": "1.0.0",
   "description": "Servidor Node.js do projeto de cadastro de pacientes",
   "main": "server.js",
@@ -9,6 +9,6 @@
   },
   "dependencies": {
     "cors": "^2.8.6",
-    "express": "^5.3.0"
+    "express": "^5.0.0"
   }
 }

@@ -17,7 +17,21 @@ let proximoId = 4;
 
 // READ (lista) — GET /pacientes
 app.get('/pacientes', (req, res) => {
+  const { nome } = req.query;
+
+  if (nome) {
+    const termo = nome.toLowerCase();
+    const filtrados = pacientes.filter((p) =>
+      p.nome.toLowerCase().includes(termo)
+    );
+    return res.json(filtrados);
+  }
+
   res.json(pacientes);
+});
+
+app.get('/pacientes/total', (req, res) => {
+  res.json({ total: pacientes.length });
 });
 
 // READ (um) — GET /pacientes/:id
@@ -38,6 +52,14 @@ app.post('/pacientes', (req, res) => {
 
   if (!nome || !email || !nascimento) {
     return res.status(400).json({ erro: 'Nome, e-mail e nascimento são obrigatórios' });
+  }
+
+  const emailJaExiste = pacientes.some(
+    (p) => p.email.toLowerCase() === email.toLowerCase()
+  );
+
+  if (emailJaExiste) {
+    return res.status(409).json({ erro: 'Este e-mail já está cadastrado' });
   }
 
   const novoPaciente = { id: proximoId++, nome, email, nascimento };
